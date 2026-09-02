@@ -1,0 +1,9 @@
+actions:
+  api.consent:
+    type: access
+    label: PLUGIN_CONSENT.PERMISSION.GROUP
+    actions:
+      read:
+        label: PLUGIN_CONSENT.PERMISSION.READ
+      write:
+        label: PLUGIN_CONSENT.PERMISSION.WRITE

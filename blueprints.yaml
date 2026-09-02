@@ -1,0 +1,680 @@
+name: Consent
+slug: consent
+type: plugin
+version: 1.0.0
+description: Cookie consent with a runtime inventory other plugins register into
+icon: shield-halved
+author:
+  name: Team Grav
+  email: devs@getgrav.org
+  url: https://getgrav.org
+homepage: https://github.com/getgrav/grav-plugin-consent
+keywords: consent, cookies, gdpr, privacy, ccpa
+bugs: https://github.com/getgrav/grav-plugin-consent/issues
+docs: https://github.com/getgrav/grav-plugin-consent/blob/develop/README.md
+license: MIT
+compatibility:
+  grav: ['2.0']
+
+dependencies:
+  - { name: grav, version: '>=2.0.0' }
+  - { name: php, version: '>=8.3' }
+
+form:
+  validation: loose
+  fields:
+    tabs:
+      type: tabs
+      active: 1
+      fields:
+
+        # ── General ────────────────────────────────────────────────────────
+        general:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.GENERAL
+          fields:
+            enabled:
+              type: toggle
+              label: PLUGIN_ADMIN.PLUGIN_STATUS
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            policy_version:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.POLICY_VERSION
+              help: PLUGIN_CONSENT.FIELD.POLICY_VERSION_HELP
+              default: 1
+              validate:
+                type: int
+                min: 1
+
+            auto_version:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.AUTO_VERSION
+              help: PLUGIN_CONSENT.FIELD.AUTO_VERSION_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            render_mode:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.RENDER_MODE
+              help: PLUGIN_CONSENT.FIELD.RENDER_MODE_HELP
+              default: cached
+              options:
+                cached: PLUGIN_CONSENT.RENDER_MODE.CACHED
+                dynamic: PLUGIN_CONSENT.RENDER_MODE.DYNAMIC
+
+            honor_gpc:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.HONOR_GPC
+              help: PLUGIN_CONSENT.FIELD.HONOR_GPC_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            exclude_routes:
+              type: array
+              label: PLUGIN_CONSENT.FIELD.EXCLUDE_ROUTES
+              help: PLUGIN_CONSENT.FIELD.EXCLUDE_ROUTES_HELP
+              value_only: true
+              placeholder_value: /some/route/*
+
+            cookie_section:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.COOKIE
+              underline: true
+
+            cookie.name:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.COOKIE_NAME
+              help: PLUGIN_CONSENT.FIELD.COOKIE_NAME_HELP
+              default: consent
+
+            cookie.lifetime_days:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.COOKIE_LIFETIME
+              help: PLUGIN_CONSENT.FIELD.COOKIE_LIFETIME_HELP
+              default: 180
+              validate:
+                type: int
+                min: 1
+                max: 730
+
+            cookie.path:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.COOKIE_PATH
+              default: /
+
+            cookie.domain:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.COOKIE_DOMAIN
+              help: PLUGIN_CONSENT.FIELD.COOKIE_DOMAIN_HELP
+              placeholder: .example.com
+
+            cookie.same_site:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.COOKIE_SAMESITE
+              default: Lax
+              options:
+                Lax: Lax
+                Strict: Strict
+                None: None
+
+            geo_section:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.GEO
+              underline: true
+
+            geo.mode:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.GEO_MODE
+              help: PLUGIN_CONSENT.FIELD.GEO_MODE_HELP
+              default: all
+              options:
+                all: PLUGIN_CONSENT.GEO.ALL
+                eu: PLUGIN_CONSENT.GEO.EU
+                custom: PLUGIN_CONSENT.GEO.CUSTOM
+
+            geo.header:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.GEO_HEADER
+              help: PLUGIN_CONSENT.FIELD.GEO_HEADER_HELP
+              default: CF-IPCountry
+
+            geo.countries:
+              type: array
+              label: PLUGIN_CONSENT.FIELD.GEO_COUNTRIES
+              help: PLUGIN_CONSENT.FIELD.GEO_COUNTRIES_HELP
+              value_only: true
+              placeholder_value: DE
+
+        # ── Appearance ─────────────────────────────────────────────────────
+        appearance:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.APPEARANCE
+          fields:
+            appearance.layout:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.LAYOUT
+              default: bar
+              options:
+                bar: PLUGIN_CONSENT.LAYOUT.BAR
+                box: PLUGIN_CONSENT.LAYOUT.BOX
+                center: PLUGIN_CONSENT.LAYOUT.CENTER
+
+            appearance.position:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.POSITION
+              help: PLUGIN_CONSENT.FIELD.POSITION_HELP
+              default: bottom-right
+              options:
+                bottom-left: PLUGIN_CONSENT.POSITION.BOTTOM_LEFT
+                bottom-right: PLUGIN_CONSENT.POSITION.BOTTOM_RIGHT
+                top-left: PLUGIN_CONSENT.POSITION.TOP_LEFT
+                top-right: PLUGIN_CONSENT.POSITION.TOP_RIGHT
+
+            appearance.mode:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.APPEARANCE_MODE
+              help: PLUGIN_CONSENT.FIELD.APPEARANCE_MODE_HELP
+              default: auto
+              options:
+                auto: PLUGIN_CONSENT.APPEARANCE.AUTO
+                light: PLUGIN_CONSENT.APPEARANCE.LIGHT
+                dark: PLUGIN_CONSENT.APPEARANCE.DARK
+
+            appearance.blocking:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.BLOCKING
+              help: PLUGIN_CONSENT.FIELD.BLOCKING_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            appearance.show_details:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.SHOW_DETAILS
+              help: PLUGIN_CONSENT.FIELD.SHOW_DETAILS_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            appearance.reopen:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.REOPEN
+              help: PLUGIN_CONSENT.FIELD.REOPEN_HELP
+              default: auto
+              options:
+                auto: PLUGIN_CONSENT.REOPEN.AUTO
+                badge: PLUGIN_CONSENT.REOPEN.BADGE
+                none: PLUGIN_CONSENT.REOPEN.NONE
+
+            tokens_section:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.TOKENS
+              text: PLUGIN_CONSENT.SECTION.TOKENS_TEXT
+              underline: true
+
+            appearance.font:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.FONT
+              help: PLUGIN_CONSENT.FIELD.FONT_HELP
+              placeholder: inherit
+
+            appearance.bg:
+              type: colorpicker
+              label: PLUGIN_CONSENT.FIELD.COLOR_BG
+
+            appearance.fg:
+              type: colorpicker
+              label: PLUGIN_CONSENT.FIELD.COLOR_FG
+
+            appearance.muted:
+              type: colorpicker
+              label: PLUGIN_CONSENT.FIELD.COLOR_MUTED
+
+            appearance.border:
+              type: colorpicker
+              label: PLUGIN_CONSENT.FIELD.COLOR_BORDER
+
+            appearance.accent:
+              type: colorpicker
+              label: PLUGIN_CONSENT.FIELD.COLOR_ACCENT
+
+            appearance.accent_fg:
+              type: colorpicker
+              label: PLUGIN_CONSENT.FIELD.COLOR_ACCENT_FG
+
+            appearance.radius:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.RADIUS
+              placeholder: 12px
+
+            appearance.max_width:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.MAX_WIDTH
+              placeholder: 1100px
+
+            appearance.z_index:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.Z_INDEX
+              placeholder: 2147483000
+
+            appearance.custom_css:
+              type: textarea
+              label: PLUGIN_CONSENT.FIELD.CUSTOM_CSS
+              help: PLUGIN_CONSENT.FIELD.CUSTOM_CSS_HELP
+              rows: 6
+
+        # ── Content ────────────────────────────────────────────────────────
+        content:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.CONTENT
+          fields:
+            content_intro:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.CONTENT
+              text: PLUGIN_CONSENT.SECTION.CONTENT_TEXT
+              underline: true
+
+            content.title:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.BANNER_TITLE
+              default: PLUGIN_CONSENT.BANNER.TITLE
+
+            content.body:
+              type: textarea
+              label: PLUGIN_CONSENT.FIELD.BANNER_BODY
+              default: PLUGIN_CONSENT.BANNER.BODY
+              rows: 3
+
+            content.accept:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.LABEL_ACCEPT
+              default: PLUGIN_CONSENT.BUTTON.ACCEPT
+
+            content.reject:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.LABEL_REJECT
+              help: PLUGIN_CONSENT.FIELD.LABEL_REJECT_HELP
+              default: PLUGIN_CONSENT.BUTTON.REJECT
+
+            content.preferences:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.LABEL_PREFERENCES
+              default: PLUGIN_CONSENT.BUTTON.PREFERENCES
+
+            content.save:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.LABEL_SAVE
+              default: PLUGIN_CONSENT.BUTTON.SAVE
+
+            content.reopen_label:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.LABEL_REOPEN
+              default: PLUGIN_CONSENT.BUTTON.REOPEN
+
+            content.prefs_title:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.PREFS_TITLE
+              default: PLUGIN_CONSENT.PREFS.TITLE
+
+            content.prefs_body:
+              type: textarea
+              label: PLUGIN_CONSENT.FIELD.PREFS_BODY
+              default: PLUGIN_CONSENT.PREFS.BODY
+              rows: 2
+
+            content.links:
+              type: list
+              label: PLUGIN_CONSENT.FIELD.LINKS
+              help: PLUGIN_CONSENT.FIELD.LINKS_HELP
+              btnLabel: PLUGIN_CONSENT.FIELD.LINKS_ADD
+              fields:
+                .label:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.LINK_LABEL
+                .url:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.LINK_URL
+
+        # ── Categories ─────────────────────────────────────────────────────
+        categories:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.CATEGORIES
+          fields:
+            categories_intro:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.CATEGORIES
+              text: PLUGIN_CONSENT.SECTION.CATEGORIES_TEXT
+              underline: true
+
+            categories:
+              type: list
+              label: PLUGIN_CONSENT.FIELD.CATEGORIES
+              help: PLUGIN_CONSENT.FIELD.CATEGORIES_HELP
+              btnLabel: PLUGIN_CONSENT.FIELD.CATEGORIES_ADD
+              collapsible: true
+              fields:
+                .id:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.CATEGORY_ID
+                  help: PLUGIN_CONSENT.FIELD.CATEGORY_ID_HELP
+                .label:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.CATEGORY_LABEL
+                .description:
+                  type: textarea
+                  label: PLUGIN_CONSENT.FIELD.CATEGORY_DESCRIPTION
+                  rows: 2
+                .required:
+                  type: toggle
+                  label: PLUGIN_CONSENT.FIELD.CATEGORY_REQUIRED
+                  help: PLUGIN_CONSENT.FIELD.CATEGORY_REQUIRED_HELP
+                  highlight: 0
+                  default: 0
+                  options:
+                    1: PLUGIN_ADMIN.YES
+                    0: PLUGIN_ADMIN.NO
+                  validate:
+                    type: bool
+                .default:
+                  type: toggle
+                  label: PLUGIN_CONSENT.FIELD.CATEGORY_DEFAULT
+                  help: PLUGIN_CONSENT.FIELD.CATEGORY_DEFAULT_HELP
+                  highlight: 0
+                  default: 0
+                  options:
+                    1: PLUGIN_ADMIN.YES
+                    0: PLUGIN_ADMIN.NO
+                  validate:
+                    type: bool
+                .priority:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.CATEGORY_PRIORITY
+                  validate:
+                    type: int
+
+        # ── Services ───────────────────────────────────────────────────────
+        services:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.SERVICES
+          fields:
+            services_intro:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.SERVICES
+              text: PLUGIN_CONSENT.SECTION.SERVICES_TEXT
+              underline: true
+
+            services:
+              type: list
+              label: PLUGIN_CONSENT.FIELD.SERVICES
+              btnLabel: PLUGIN_CONSENT.FIELD.SERVICES_ADD
+              collapsible: true
+              fields:
+                .id:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.SERVICE_ID
+                .name:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.SERVICE_NAME
+                .category:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.SERVICE_CATEGORY
+                  help: PLUGIN_CONSENT.FIELD.SERVICE_CATEGORY_HELP
+                .description:
+                  type: textarea
+                  label: PLUGIN_CONSENT.FIELD.SERVICE_DESCRIPTION
+                  rows: 2
+                .provider:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.SERVICE_PROVIDER
+                .privacy_url:
+                  type: text
+                  label: PLUGIN_CONSENT.FIELD.SERVICE_PRIVACY_URL
+                .cookies:
+                  type: list
+                  label: PLUGIN_CONSENT.FIELD.SERVICE_COOKIES
+                  btnLabel: PLUGIN_CONSENT.FIELD.SERVICE_COOKIES_ADD
+                  fields:
+                    .name:
+                      type: text
+                      label: PLUGIN_CONSENT.FIELD.COOKIE_ROW_NAME
+                    .duration:
+                      type: text
+                      label: PLUGIN_CONSENT.FIELD.COOKIE_ROW_DURATION
+                    .type:
+                      type: select
+                      label: PLUGIN_CONSENT.FIELD.COOKIE_ROW_TYPE
+                      default: cookie
+                      options:
+                        cookie: PLUGIN_CONSENT.STORAGE.COOKIE
+                        local_storage: PLUGIN_CONSENT.STORAGE.LOCAL
+                        session_storage: PLUGIN_CONSENT.STORAGE.SESSION
+                        indexed_db: PLUGIN_CONSENT.STORAGE.INDEXED_DB
+                        pixel: PLUGIN_CONSENT.STORAGE.PIXEL
+
+        # ── Inventory ──────────────────────────────────────────────────────
+        inventory:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.INVENTORY
+          fields:
+            inventory_view:
+              type: consent-inventory
+              label: PLUGIN_CONSENT.FIELD.INVENTORY
+              help: PLUGIN_CONSENT.FIELD.INVENTORY_HELP
+
+        # ── Auto-blocking ──────────────────────────────────────────────────
+        autoblock:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.AUTOBLOCK
+          fields:
+            autoblock_intro:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.AUTOBLOCK
+              text: PLUGIN_CONSENT.SECTION.AUTOBLOCK_TEXT
+              underline: true
+
+            autoblock.enabled:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.AUTOBLOCK
+              help: PLUGIN_CONSENT.FIELD.AUTOBLOCK_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            autoblock.inline:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.AUTOBLOCK_INLINE
+              help: PLUGIN_CONSENT.FIELD.AUTOBLOCK_INLINE_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            autoblock.allow:
+              type: array
+              label: PLUGIN_CONSENT.FIELD.AUTOBLOCK_ALLOW
+              help: PLUGIN_CONSENT.FIELD.AUTOBLOCK_ALLOW_HELP
+              value_only: true
+              placeholder_value: example.com
+
+        # ── Consent Mode ───────────────────────────────────────────────────
+        consent_mode:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.CONSENT_MODE
+          fields:
+            consent_mode_intro:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.CONSENT_MODE
+              text: PLUGIN_CONSENT.SECTION.CONSENT_MODE_TEXT
+              underline: true
+
+            consent_mode.enabled:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.CONSENT_MODE
+              help: PLUGIN_CONSENT.FIELD.CONSENT_MODE_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            consent_mode.wait_for_update:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.WAIT_FOR_UPDATE
+              help: PLUGIN_CONSENT.FIELD.WAIT_FOR_UPDATE_HELP
+              default: 500
+              validate:
+                type: int
+                min: 0
+                max: 5000
+
+            consent_mode.mapping:
+              type: array
+              label: PLUGIN_CONSENT.FIELD.CONSENT_MODE_MAPPING
+              help: PLUGIN_CONSENT.FIELD.CONSENT_MODE_MAPPING_HELP
+              placeholder_key: analytics
+              placeholder_value: analytics_storage
+
+        # ── Log ────────────────────────────────────────────────────────────
+        log:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.LOG
+          fields:
+            log_intro:
+              type: section
+              title: PLUGIN_CONSENT.SECTION.LOG
+              text: PLUGIN_CONSENT.SECTION.LOG_TEXT
+              underline: true
+
+            log.backend:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.LOG_BACKEND
+              help: PLUGIN_CONSENT.FIELD.LOG_BACKEND_HELP
+              default: file
+              options:
+                file: PLUGIN_CONSENT.LOG_BACKEND.FILE
+                none: PLUGIN_CONSENT.LOG_BACKEND.NONE
+
+            log.endpoint:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.LOG_ENDPOINT
+              help: PLUGIN_CONSENT.FIELD.LOG_ENDPOINT_HELP
+              default: /_consent
+
+            log.retain_days:
+              type: text
+              label: PLUGIN_CONSENT.FIELD.LOG_RETAIN
+              help: PLUGIN_CONSENT.FIELD.LOG_RETAIN_HELP
+              default: 400
+              validate:
+                type: int
+                min: 0
+
+            log.hash_ip:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.LOG_HASH_IP
+              help: PLUGIN_CONSENT.FIELD.LOG_HASH_IP_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            log.hash_ua:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.LOG_HASH_UA
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            log.always_post:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.LOG_ALWAYS_POST
+              help: PLUGIN_CONSENT.FIELD.LOG_ALWAYS_POST_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+        # ── Advanced ───────────────────────────────────────────────────────
+        advanced:
+          type: tab
+          title: PLUGIN_CONSENT.TAB.ADVANCED
+          fields:
+            assets.inline_css:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.INLINE_CSS
+              help: PLUGIN_CONSENT.FIELD.INLINE_CSS_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            assets.inline_js:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.INLINE_JS
+              help: PLUGIN_CONSENT.FIELD.INLINE_JS_HELP
+              highlight: 0
+              default: 0
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool
+
+            admin.sidebar:
+              type: toggle
+              label: PLUGIN_CONSENT.FIELD.ADMIN_SIDEBAR
+              help: PLUGIN_CONSENT.FIELD.ADMIN_SIDEBAR_HELP
+              highlight: 1
+              default: 1
+              options:
+                1: PLUGIN_ADMIN.ENABLED
+                0: PLUGIN_ADMIN.DISABLED
+              validate:
+                type: bool

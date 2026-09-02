@@ -1,0 +1,33 @@
+{
+  "name": "getgrav/grav-plugin-consent",
+  "type": "grav-plugin",
+  "description": "Grav Plugin Consent",
+  "keywords": ["consent", "cookies", "gdpr", "privacy"],
+  "homepage": "https://github.com/getgrav/grav-plugin-consent",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Team Grav",
+      "email": "devs@getgrav.org",
+      "homepage": "https://getgrav.org",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/getgrav/grav-plugin-consent/issues",
+    "forum": "https://discourse.getgrav.org",
+    "docs": "https://github.com/getgrav/grav-plugin-consent/blob/develop/README.md"
+  },
+  "require": {
+    "php": ">=8.3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Grav\\Plugin\\Consent\\": "classes/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

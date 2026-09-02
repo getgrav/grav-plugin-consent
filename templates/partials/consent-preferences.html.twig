@@ -1,0 +1,123 @@
+{#
+    Preferences panel.
+
+    Server-rendered rather than built in JavaScript, so the category names and
+    cookie descriptions are translated by Grav the same way everything else on
+    the site is, and a theme can restyle or replace the whole thing without
+    touching a script.
+#}
+<div class="consent-prefs"
+     data-consent-panel="preferences"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="consent-prefs-title"
+     hidden>
+    <div class="consent-prefs-backdrop" data-consent-action="close"></div>
+
+    <div class="consent-prefs-card" role="document">
+        <header class="consent-prefs-head">
+            <h2 class="consent-title" id="consent-prefs-title">{{ content.prefs_title }}</h2>
+            <button type="button"
+                    class="consent-close"
+                    data-consent-action="close"
+                    aria-label="{{ content.close|e('html_attr') }}">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+                    <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
+        </header>
+
+        <div class="consent-prefs-body">
+            <p class="consent-text">{{ content.prefs_body|raw }}</p>
+            <p class="consent-gpc" data-consent-gpc hidden>{{ content.gpc_notice }}</p>
+
+            {% for category in categories %}
+                {% set category_services = services|filter(service => service.category == category.id) %}
+                <section class="consent-category">
+                    <div class="consent-category-head">
+                        <label class="consent-switch">
+                            <input type="checkbox"
+                                   data-consent-toggle="{{ category.id }}"
+                                   {% if category.required %}checked disabled{% endif %}
+                                   aria-describedby="consent-cat-desc-{{ category.id }}">
+                            <span class="consent-switch-track" aria-hidden="true"><span class="consent-switch-thumb"></span></span>
+                            <span class="consent-category-label">{{ category.label }}</span>
+                        </label>
+
+                        {% if category.required %}
+                            <span class="consent-pill">{{ 'PLUGIN_CONSENT.PREFS.ALWAYS_ON'|t }}</span>
+                        {% endif %}
+                    </div>
+
+                    {% if category.description %}
+                        <p class="consent-category-desc" id="consent-cat-desc-{{ category.id }}">{{ category.description }}</p>
+                    {% endif %}
+
+                    {% if show_details %}
+                        <details class="consent-details">
+                            <summary>
+                                {{ 'PLUGIN_CONSENT.PREFS.SHOW_DETAILS'|t }}
+                                {% if category_services|length %}<span class="consent-count">{{ category_services|length }}</span>{% endif %}
+                            </summary>
+
+                            {% if category_services|length %}
+                                <ul class="consent-service-list">
+                                    {% for service in category_services %}
+                                        <li class="consent-service">
+                                            <div class="consent-service-head">
+                                                <span class="consent-service-name">{{ service.name }}</span>
+                                                {% if service.provider %}
+                                                    <span class="consent-service-provider">{{ 'PLUGIN_CONSENT.PREFS.RUN_BY'|t }} {{ service.provider }}</span>
+                                                {% endif %}
+                                            </div>
+
+                                            {% if service.description %}
+                                                <p class="consent-service-desc">{{ service.description }}</p>
+                                            {% endif %}
+
+                                            {% if service.cookies|length %}
+                                                <table class="consent-cookie-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col">{{ 'PLUGIN_CONSENT.PREFS.STORES'|t }}</th>
+                                                            <th scope="col">{{ 'PLUGIN_CONSENT.PREFS.DURATION'|t }}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for cookie in service.cookies %}
+                                                            <tr>
+                                                                <td>
+                                                                    <code>{{ cookie.name }}</code>
+                                                                    {% if cookie.type != 'cookie' %}
+                                                                        <span class="consent-tag">{{ ('PLUGIN_CONSENT.STORAGE.' ~ (cookie.type == 'local_storage' ? 'LOCAL' : cookie.type == 'session_storage' ? 'SESSION' : cookie.type == 'indexed_db' ? 'INDEXED_DB' : 'PIXEL'))|t }}</span>
+                                                                    {% endif %}
+                                                                </td>
+                                                                <td>{{ cookie.duration ?: 'PLUGIN_CONSENT.PREFS.SESSION'|t }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            {% endif %}
+
+                                            {% if service.privacy_url %}
+                                                <a class="consent-service-link" href="{{ service.privacy_url }}" target="_blank" rel="noopener noreferrer">{{ 'PLUGIN_CONSENT.PREFS.PRIVACY_POLICY'|t }}</a>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p class="consent-empty">{{ 'PLUGIN_CONSENT.PREFS.NO_SERVICES'|t }}</p>
+                            {% endif %}
+                        </details>
+                    {% endif %}
+                </section>
+            {% endfor %}
+        </div>
+
+        <footer class="consent-prefs-foot">
+            <button type="button" class="consent-btn consent-btn-solid" data-consent-action="reject">{{ content.reject }}</button>
+            <button type="button" class="consent-btn consent-btn-ghost" data-consent-action="save">{{ content.save }}</button>
+            <button type="button" class="consent-btn consent-btn-solid" data-consent-action="accept">{{ content.accept }}</button>
+        </footer>
+    </div>
+</div>

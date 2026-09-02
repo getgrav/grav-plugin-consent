@@ -1,0 +1,52 @@
+{#
+    Stands in for content held back until a category is granted.
+
+    Third-party embeds are where every site owner gets stuck, because the
+    markup sits in a page or a template and there is nothing to hook. The
+    {% consent %} tag wraps it, and this renders in its place with a button
+    that grants exactly that one category and loads the content where it stands.
+
+    In cached render mode the real markup travels inside the inert <template>
+    below — identical HTML for every visitor, swapped in by the client. In
+    dynamic mode `payload` is null and the content is simply absent.
+#}
+<div class="consent-root consent-placeholder"
+     data-consent-appearance="{{ appearance|default('auto') }}"
+     data-consent-placeholder
+     data-consent-category="{{ category }}"
+     {% if service %}data-consent-service="{{ service.id }}"{% endif %}>
+
+    {% if payload is not null %}
+        <template data-consent-content>{{ payload|raw }}</template>
+    {% endif %}
+
+    {% if fallback is not null %}
+        {{ fallback|raw }}
+    {% else %}
+        <div class="consent-placeholder-inner">
+            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false" class="consent-placeholder-icon">
+                <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                      d="M6 10V7a6 6 0 0 1 12 0v3M5 10h14v10H5z"/>
+            </svg>
+            <p class="consent-placeholder-title">
+                {{ label ?: 'PLUGIN_CONSENT.PLACEHOLDER.TITLE'|t }}
+            </p>
+            <p class="consent-placeholder-body">
+                {% if description %}
+                    {{ description }}
+                {% elseif service %}
+                    {{ service.name }}{% if service.provider %} — {{ 'PLUGIN_CONSENT.PREFS.RUN_BY'|t }} {{ service.provider }}{% endif %}.
+                    {{ 'PLUGIN_CONSENT.PLACEHOLDER.BODY'|t }}
+                {% else %}
+                    {{ 'PLUGIN_CONSENT.PLACEHOLDER.BODY'|t }}
+                {% endif %}
+            </p>
+            <button type="button" class="consent-btn consent-btn-solid" data-consent-allow="{{ category }}">
+                {{ 'PLUGIN_CONSENT.PLACEHOLDER.BUTTON'|t }}
+            </button>
+            <button type="button" class="consent-placeholder-more" data-consent-open>
+                {{ 'PLUGIN_CONSENT.BUTTON.REOPEN'|t }}
+            </button>
+        </div>
+    {% endif %}
+</div>

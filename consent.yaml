@@ -1,0 +1,90 @@
+enabled: true
+
+# Bump to re-ask everyone. With auto_version on (the default) the effective
+# version also folds in a hash of the category and service ids, so installing a
+# plugin that stores something new re-asks on its own.
+policy_version: 1
+auto_version: true
+
+honor_gpc: true
+
+# cached  — identical HTML for every visitor, safe behind a CDN or page cache,
+#           grants apply without a reload.
+# dynamic — blocked scripts are absent from the source, no swap flicker on
+#           embeds, response carries Vary: Cookie.
+render_mode: cached
+
+exclude_routes: {}
+
+cookie:
+  name: consent
+  lifetime_days: 180
+  path: /
+  domain: ''
+  same_site: Lax
+
+geo:
+  mode: all
+  header: CF-IPCountry
+  countries: {}
+
+appearance:
+  layout: bar
+  position: bottom-right
+  mode: auto
+  blocking: false
+  show_details: true
+  reopen: auto
+  bg: ''
+  fg: ''
+  muted: ''
+  border: ''
+  accent: ''
+  accent_fg: ''
+  radius: ''
+  max_width: ''
+  font: ''
+  z_index: ''
+  custom_css: ''
+
+content:
+  title: PLUGIN_CONSENT.BANNER.TITLE
+  body: PLUGIN_CONSENT.BANNER.BODY
+  accept: PLUGIN_CONSENT.BUTTON.ACCEPT
+  reject: PLUGIN_CONSENT.BUTTON.REJECT
+  preferences: PLUGIN_CONSENT.BUTTON.PREFERENCES
+  save: PLUGIN_CONSENT.BUTTON.SAVE
+  close: PLUGIN_CONSENT.BUTTON.CLOSE
+  prefs_title: PLUGIN_CONSENT.PREFS.TITLE
+  prefs_body: PLUGIN_CONSENT.PREFS.BODY
+  reopen_label: PLUGIN_CONSENT.BUTTON.REOPEN
+  gpc_notice: PLUGIN_CONSENT.GPC_NOTICE
+  links: {}
+
+categories: {}
+services: {}
+
+autoblock:
+  enabled: false
+  inline: true
+  allow: {}
+
+consent_mode:
+  enabled: false
+  wait_for_update: 500
+  mapping: {}
+
+log:
+  backend: file
+  endpoint: /_consent
+  retain_days: 400
+  hash_ip: true
+  hash_ua: true
+  always_post: false
+
+assets:
+  inline_css: true
+  inline_js: false
+
+admin:
+  sidebar: true
