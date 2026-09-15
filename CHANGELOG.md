@@ -1,3 +1,15 @@
+# v1.0.1
+## 09/15/2026
+
+1. [](#new)
+    * Added a Spanish translation, covering both the cookie banner and the admin screens. Thanks @pmoreno-rodriguez [#2](https://github.com/getgrav/grav-plugin-consent/pull/2)
+
+1. [](#improved)
+    * Short settings like a number of days or a corner radius no longer stretch across the whole admin screen. Thanks @pmoreno-rodriguez [#1](https://github.com/getgrav/grav-plugin-consent/pull/1)
+
+1. [](#bugfix)
+    * **A consent category or service whose ID is a plain number no longer breaks the plugin.** PHP turns an ID like `2` into a number when it is used as a key, so the banner failed with a type error as soon as anything asked which category to fall back to, and a category written that way by hand in a config file was dropped without a word. IDs are now read from the category itself rather than from the key, so a numeric one behaves like any other. Thanks @pmoreno-rodriguez [#3](https://github.com/getgrav/grav-plugin-consent/issues/3)
+
 # v1.0.0
 ## 09/02/2026
 

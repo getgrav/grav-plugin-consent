@@ -76,7 +76,7 @@ final class ServiceRegistry implements IteratorAggregate, Countable
      */
     public function ids(): array
     {
-        $ids = array_keys($this->items);
+        $ids = array_map(static fn (Service $s) => $s->id, array_values($this->items));
         sort($ids);
 
         return $ids;
@@ -116,7 +116,7 @@ final class ServiceRegistry implements IteratorAggregate, Countable
             $data['cookies'] = $service->cookies;
             $data['on_revoke'] = $service->onRevoke;
             $data['privacy_url'] = $service->privacyUrl;
-            $this->items[$id] = Service::fromArray($id, $data, $service->source);
+            $this->items[$id] = Service::fromArray($service->id, $data, $service->source);
         }
 
         return $this;

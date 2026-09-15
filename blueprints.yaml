@@ -1,7 +1,7 @@
 name: Consent
 slug: consent
 type: plugin
-version: 1.0.0
+version: 1.0.1
 description: Cookie consent with a runtime inventory other plugins register into
 icon: shield-halved
 author:
@@ -49,6 +49,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.POLICY_VERSION
               help: PLUGIN_CONSENT.FIELD.POLICY_VERSION_HELP
               default: 1
+              size: small
               validate:
                 type: int
                 min: 1
@@ -103,12 +104,14 @@ form:
               label: PLUGIN_CONSENT.FIELD.COOKIE_NAME
               help: PLUGIN_CONSENT.FIELD.COOKIE_NAME_HELP
               default: consent
+              size: medium
 
             cookie.lifetime_days:
               type: text
               label: PLUGIN_CONSENT.FIELD.COOKIE_LIFETIME
               help: PLUGIN_CONSENT.FIELD.COOKIE_LIFETIME_HELP
               default: 180
+              size: small
               validate:
                 type: int
                 min: 1
@@ -129,6 +132,7 @@ form:
               type: select
               label: PLUGIN_CONSENT.FIELD.COOKIE_SAMESITE
               default: Lax
+              size: small
               options:
                 Lax: Lax
                 Strict: Strict
@@ -144,6 +148,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.GEO_MODE
               help: PLUGIN_CONSENT.FIELD.GEO_MODE_HELP
               default: all
+              size: medium
               options:
                 all: PLUGIN_CONSENT.GEO.ALL
                 eu: PLUGIN_CONSENT.GEO.EU
@@ -154,6 +159,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.GEO_HEADER
               help: PLUGIN_CONSENT.FIELD.GEO_HEADER_HELP
               default: CF-IPCountry
+              size: medium
 
             geo.countries:
               type: array
@@ -171,6 +177,7 @@ form:
               type: select
               label: PLUGIN_CONSENT.FIELD.LAYOUT
               default: bar
+              size: medium
               options:
                 bar: PLUGIN_CONSENT.LAYOUT.BAR
                 box: PLUGIN_CONSENT.LAYOUT.BOX
@@ -181,6 +188,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.POSITION
               help: PLUGIN_CONSENT.FIELD.POSITION_HELP
               default: bottom-right
+              size: medium
               options:
                 bottom-left: PLUGIN_CONSENT.POSITION.BOTTOM_LEFT
                 bottom-right: PLUGIN_CONSENT.POSITION.BOTTOM_RIGHT
@@ -192,6 +200,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.APPEARANCE_MODE
               help: PLUGIN_CONSENT.FIELD.APPEARANCE_MODE_HELP
               default: auto
+              size: large
               options:
                 auto: PLUGIN_CONSENT.APPEARANCE.AUTO
                 light: PLUGIN_CONSENT.APPEARANCE.LIGHT
@@ -226,6 +235,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.REOPEN
               help: PLUGIN_CONSENT.FIELD.REOPEN_HELP
               default: auto
+              size: large
               options:
                 auto: PLUGIN_CONSENT.REOPEN.AUTO
                 badge: PLUGIN_CONSENT.REOPEN.BADGE
@@ -242,6 +252,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.FONT
               help: PLUGIN_CONSENT.FIELD.FONT_HELP
               placeholder: inherit
+              size: medium
 
             appearance.bg:
               type: colorpicker
@@ -271,16 +282,19 @@ form:
               type: text
               label: PLUGIN_CONSENT.FIELD.RADIUS
               placeholder: 12px
+              size: small
 
             appearance.max_width:
               type: text
               label: PLUGIN_CONSENT.FIELD.MAX_WIDTH
               placeholder: 1100px
+              size: small
 
             appearance.z_index:
               type: text
               label: PLUGIN_CONSENT.FIELD.Z_INDEX
               placeholder: 2147483000
+              size: small
 
             appearance.custom_css:
               type: textarea
@@ -314,27 +328,32 @@ form:
               type: text
               label: PLUGIN_CONSENT.FIELD.LABEL_ACCEPT
               default: PLUGIN_CONSENT.BUTTON.ACCEPT
+              size: medium
 
             content.reject:
               type: text
               label: PLUGIN_CONSENT.FIELD.LABEL_REJECT
               help: PLUGIN_CONSENT.FIELD.LABEL_REJECT_HELP
               default: PLUGIN_CONSENT.BUTTON.REJECT
+              size: medium
 
             content.preferences:
               type: text
               label: PLUGIN_CONSENT.FIELD.LABEL_PREFERENCES
               default: PLUGIN_CONSENT.BUTTON.PREFERENCES
+              size: medium
 
             content.save:
               type: text
               label: PLUGIN_CONSENT.FIELD.LABEL_SAVE
               default: PLUGIN_CONSENT.BUTTON.SAVE
+              size: medium
 
             content.reopen_label:
               type: text
               label: PLUGIN_CONSENT.FIELD.LABEL_REOPEN
               default: PLUGIN_CONSENT.BUTTON.REOPEN
+              size: medium
 
             content.prefs_title:
               type: text
@@ -556,6 +575,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.WAIT_FOR_UPDATE
               help: PLUGIN_CONSENT.FIELD.WAIT_FOR_UPDATE_HELP
               default: 500
+              size: small
               validate:
                 type: int
                 min: 0
@@ -584,6 +604,7 @@ form:
               label: PLUGIN_CONSENT.FIELD.LOG_BACKEND
               help: PLUGIN_CONSENT.FIELD.LOG_BACKEND_HELP
               default: file
+              size: medium
               options:
                 file: PLUGIN_CONSENT.LOG_BACKEND.FILE
                 none: PLUGIN_CONSENT.LOG_BACKEND.NONE
@@ -593,12 +614,14 @@ form:
               label: PLUGIN_CONSENT.FIELD.LOG_ENDPOINT
               help: PLUGIN_CONSENT.FIELD.LOG_ENDPOINT_HELP
               default: /_consent
+              size: medium
 
             log.retain_days:
               type: text
               label: PLUGIN_CONSENT.FIELD.LOG_RETAIN
               help: PLUGIN_CONSENT.FIELD.LOG_RETAIN_HELP
               default: 400
+              size: small
               validate:
                 type: int
                 min: 0
