@@ -167,9 +167,9 @@ final class Registry
      */
     private function fallbackCategory(): string
     {
-        foreach ($this->categories()->all() as $id => $category) {
+        foreach ($this->categories()->all() as $category) {
             if (!$category->required) {
-                return $id;
+                return $category->id;
             }
         }
 
@@ -192,7 +192,13 @@ final class Registry
             // Admin list fields hand back a numerically-indexed array of rows
             // carrying their own `id`; a hand-edited yaml is more likely keyed
             // by id. Accept both.
-            $id = is_string($key) ? $key : (string)($row['id'] ?? '');
+            // A yaml keyed by id gives a string key — except for an id like
+            // "2", which PHP hands back as an int. Treat that as the id too,
+            // or the category is silently dropped.
+            $id = is_int($key) ? (string)$key : (is_string($key) ? $key : '');
+            if ($id === '') {
+                $id = is_array($row) ? (string)($row['id'] ?? '') : '';
+            }
             if ($id === '') {
                 continue;
             }
@@ -214,7 +220,10 @@ final class Registry
 
         $out = [];
         foreach ($configured as $key => $row) {
-            $id = is_string($key) ? $key : (string)($row['id'] ?? '');
+            $id = is_int($key) ? (string)$key : (is_string($key) ? $key : '');
+            if ($id === '' && is_array($row)) {
+                $id = (string)($row['id'] ?? '');
+            }
             if ($id === '' || !is_array($row)) {
                 continue;
             }

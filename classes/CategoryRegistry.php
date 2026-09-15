@@ -65,11 +65,15 @@ final class CategoryRegistry implements IteratorAggregate, Countable
     }
 
     /**
+     * PHP casts an integer-like array key to int, so an id such as "2" comes
+     * back from array_keys() as an int and breaks every string type hint
+     * downstream. Category::$id keeps the string, so read that instead.
+     *
      * @return array<int, string>
      */
     public function ids(): array
     {
-        return array_keys($this->all());
+        return array_map(static fn (Category $c) => $c->id, array_values($this->all()));
     }
 
     /**
@@ -79,7 +83,10 @@ final class CategoryRegistry implements IteratorAggregate, Countable
      */
     public function requiredIds(): array
     {
-        return array_keys(array_filter($this->all(), static fn (Category $c) => $c->required));
+        return array_map(
+            static fn (Category $c) => $c->id,
+            array_values(array_filter($this->all(), static fn (Category $c) => $c->required))
+        );
     }
 
     /**
@@ -89,7 +96,10 @@ final class CategoryRegistry implements IteratorAggregate, Countable
      */
     public function defaultIds(): array
     {
-        return array_keys(array_filter($this->all(), static fn (Category $c) => $c->required || $c->default));
+        return array_map(
+            static fn (Category $c) => $c->id,
+            array_values(array_filter($this->all(), static fn (Category $c) => $c->required || $c->default))
+        );
     }
 
     /**
