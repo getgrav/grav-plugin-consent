@@ -96,6 +96,24 @@ class ConsentPlugin extends Plugin
         $this->settings = (array)$this->config->get('plugins.consent', []);
         Consent::boot($this->settings);
 
+        // A separate uncached request keeps a proxy's country out of shared HTML.
+        if (Consent::enabled() && $this->isCountryRequest()) {
+            $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+            $this->grav->close(new \Grav\Framework\Psr7\Response(
+                $method === 'GET' ? 200 : 405,
+                [
+                    'Content-Type' => 'application/json',
+                    'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+                    'Allow' => 'GET',
+                ],
+                (string)json_encode($method === 'GET'
+                    ? ['country' => Consent::instance()->detectCountry()]
+                    : ['error' => 'method_not_allowed'])
+            ));
+
+            return;
+        }
+
         // The decision endpoint answers on admin and frontend alike — a
         // visitor can be logged in, and a plain Grav route is used rather than
         // an API-plugin route so the frontend never depends on the API plugin
@@ -240,6 +258,10 @@ class ConsentPlugin extends Plugin
         // point of it.
         if ($consent->renderMode() === 'dynamic' && !headers_sent()) {
             header('Vary: Cookie', false);
+            if (($this->settings['geo']['mode'] ?? 'all') !== 'all') {
+                // Header-derived country and GPC may also change this body.
+                $this->grav['page']->cacheControl('private, no-store');
+            }
         }
 
         // Auto-blocking runs first: it can register services the banner then
@@ -353,6 +375,13 @@ class ConsentPlugin extends Plugin
     }
 
     // ── decision endpoint ──────────────────────────────────────────────────
+
+    private function isCountryRequest(): bool
+    {
+        $path = '/' . trim((string)($this->settings['log']['endpoint'] ?? '/_consent'), '/');
+
+        return rtrim($this->grav['uri']->path(), '/') === rtrim($path, '/') . '/country';
+    }
 
     private function isDecisionRequest(): bool
     {

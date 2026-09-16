@@ -27,9 +27,8 @@ final class ConsentRenderer
     {
         $consent = Consent::instance();
 
-        // With the plugin off, or outside the scope it asks in, the gate is
-        // not there at all and the content is simply the content.
-        if (!$consent->isEnabled() || !$consent->isInScope()) {
+        // Cached markup must remain independent of the visitor's country.
+        if (!$consent->isEnabled()) {
             return $body;
         }
 
@@ -157,6 +156,7 @@ final class ConsentRenderer
             'honorGpc' => (bool)($config['honor_gpc'] ?? true),
             'gpcSignal' => $consent->gpcSignal(),
             'endpoint' => self::endpoint($config),
+            'geo' => self::geoPayload($config),
             'consentMode' => self::consentModePayload($config, $categories),
             'strings' => Translate::all([
                 'placeholderTitle' => 'PLUGIN_CONSENT.PLACEHOLDER.TITLE',
@@ -380,6 +380,38 @@ final class ConsentRenderer
         $path = '/' . ltrim($path, '/');
 
         return rtrim(Grav::instance()['base_url_relative'] ?? '', '/') . $path;
+    }
+
+    /** The header lookup is separate from cached HTML and decision logging. */
+    public static function countryEndpoint(array $config): string
+    {
+        $path = '/' . trim((string)($config['log']['endpoint'] ?? '/_consent'), '/');
+
+        return rtrim(Grav::instance()['base_url_relative'] ?? '', '/') . rtrim($path, '/') . '/country';
+    }
+
+    /** @return array<string, mixed> */
+    private static function geoPayload(array $config): array
+    {
+        $geo = (array)($config['geo'] ?? []);
+        $mode = (string)($geo['mode'] ?? 'all');
+        if (!in_array($mode, ['eu', 'custom'], true)) {
+            return ['mode' => 'all'];
+        }
+
+        $countries = $mode === 'eu' ? Consent::EU_EEA_UK_CH : (array)($geo['countries'] ?? []);
+
+        return [
+            'mode' => $mode,
+            'provider' => ($geo['provider'] ?? 'header') === 'country_is' ? 'country_is' : 'header',
+            'outsideScope' => ($geo['outside_scope'] ?? 'allow') === 'allow' ? 'allow' : 'deny',
+            'url' => ($geo['provider'] ?? 'header') === 'country_is'
+                ? 'https://api.country.is/' : self::countryEndpoint($config),
+            'countries' => array_values(array_unique(array_filter(array_map(
+                static fn ($country) => strtoupper(trim((string)$country)),
+                $countries
+            ), static fn ($country) => (bool)preg_match('/^[A-Z]{2}$/D', $country)))),
+        ];
     }
 
     /**
