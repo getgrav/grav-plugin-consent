@@ -45,6 +45,117 @@
 
     var state = readState();
     var lastFocus = null;
+    var promptHandled = false;
+    var outsideScope = false;
+
+    // ── country lookup ──────────────────────────────────────────────────────
+
+    function countryCode(value) {
+        if (typeof value !== 'string') {
+            return null;
+        }
+        value = value.trim().toUpperCase();
+        return /^[A-Z]{2}$/.test(value) && value !== 'XX' && value !== 'ZZ' ? value : null;
+    }
+
+    /** A location-based allowance is separate from a recorded consent decision. */
+    function autoPrompt() {
+        var geo = config.geo || {};
+        if (geo.mode !== 'eu' && geo.mode !== 'custom') {
+            showBanner();
+            return;
+        }
+
+        function resolved(country, expires) {
+            outsideScope = !!country && Array.isArray(geo.countries) && geo.countries.indexOf(country) === -1;
+            if (country && geo.provider === 'country_is') {
+                // PHP can apply the same policy on subsequent dynamic requests.
+                // This is a country hint, never a consent decision or an IP.
+                var hint = JSON.stringify({
+                    country: country, provider: 'country_is', expires: Math.floor(expires / 1000)
+                });
+                try {
+                    writeCookie(COOKIE.name + '_country', hint, Math.max(1, Math.floor((expires - Date.now()) / 1000)));
+                } catch (e) { /* cookies may be disabled */ }
+                if (config.mode === 'dynamic' && outsideScope && (geo.outsideScope || 'allow') === 'allow'
+                    && readRawCookie(COOKIE.name + '_country') !== encodeURIComponent(hint)) {
+                    // PHP cannot use the result without the hint. Keep gates
+                    // closed instead of repeatedly reloading a blocked embed.
+                    outsideScope = false;
+                    country = null;
+                }
+            }
+            if (!state && outsideScope) {
+                apply();
+                runManagedScripts();
+                pushConsentMode();
+                syncToggles();
+                emit({
+                    granted: allIds.filter(granted),
+                    denied: allIds.filter(function (id) { return !granted(id); }),
+                    changed: [], first: false, geographic: true
+                });
+            }
+            // A response arriving after a decision, a manual open or dismissal
+            // must not reopen the banner or steal focus from preferences.
+            if (!state && !promptHandled && (!country || !Array.isArray(geo.countries)
+                || geo.countries.indexOf(country) > -1)) {
+                showBanner();
+            }
+        }
+
+        var cacheKey = 'grav-consent-country:' + geo.url;
+        // Dynamic PHP rendering reads the current header. Reusing an older
+        // header result here could keep reloading an embed PHP still blocks.
+        var cacheCountry = config.mode !== 'dynamic' || geo.provider === 'country_is';
+        try {
+            var cached = cacheCountry ? JSON.parse(sessionStorage.getItem(cacheKey)) : null;
+            if (cached && countryCode(cached.country) && cached.expires > Date.now()
+                && cached.expires <= Date.now() + 3600000) {
+                resolved(countryCode(cached.country), cached.expires);
+                return;
+            }
+        } catch (e) { /* unavailable or invalid storage: do a fresh lookup */ }
+
+        if (!geo.url || typeof fetch !== 'function') {
+            resolved(null);
+            return;
+        }
+
+        var controller = typeof AbortController === 'function' ? new AbortController() : null;
+        var finished = false;
+        var timer = setTimeout(function () {
+            finish(null);
+            if (controller) { controller.abort(); }
+        }, 3000);
+
+        function finish(country) {
+            if (finished) { return; }
+            finished = true;
+            clearTimeout(timer);
+            var expires = Date.now() + 3600000;
+            if (country && cacheCountry) {
+                try {
+                    // Store only the country, never the IP returned by country.is.
+                    sessionStorage.setItem(cacheKey, JSON.stringify({ country: country, expires: expires }));
+                } catch (e) { /* storage is optional */ }
+            }
+            resolved(country, expires);
+        }
+
+        try {
+            var options = { credentials: 'omit', referrerPolicy: 'no-referrer', cache: 'no-store' };
+            if (controller) { options.signal = controller.signal; }
+            fetch(geo.url, options).then(function (response) {
+                if (!response.ok) { throw new Error('Country lookup failed'); }
+                return response.json();
+            }).then(function (data) {
+                finish(countryCode(data && data.country));
+            }).catch(function () { finish(null); });
+        } catch (e) {
+            finish(null);
+        }
+    }
 
     // ── storage ─────────────────────────────────────────────────────────────
 
@@ -82,17 +193,20 @@
     }
 
     function writeState(next) {
-        var value = encodeURIComponent(JSON.stringify({
+        writeCookie(COOKIE.name, JSON.stringify({
             v: next.version,
             t: next.time,
             c: next.categories,
             r: next.id
-        }));
+        }), (COOKIE.days || 180) * 86400);
+        state = next;
+    }
 
+    function writeCookie(name, value, maxAge) {
         var parts = [
-            COOKIE.name + '=' + value,
+            name + '=' + encodeURIComponent(value),
             'path=' + (COOKIE.path || '/'),
-            'max-age=' + ((COOKIE.days || 180) * 86400),
+            'max-age=' + maxAge,
             'SameSite=' + (COOKIE.sameSite || 'Lax')
         ];
         if (COOKIE.domain) {
@@ -103,7 +217,6 @@
         }
 
         document.cookie = parts.join('; ');
-        state = next;
     }
 
     function clearCookie(name) {
@@ -138,7 +251,11 @@
         if (requiredIds.indexOf(category) > -1) {
             return true;
         }
-        return !!state && state.categories.indexOf(category) > -1;
+        if (state) {
+            return state.categories.indexOf(category) > -1;
+        }
+        return allIds.indexOf(category) > -1 && outsideScope
+            && (config.geo.outsideScope || 'allow') === 'allow' && !gpcActive();
     }
 
     function gpcActive() {
@@ -455,7 +572,9 @@
     // ── decisions ───────────────────────────────────────────────────────────
 
     function decide(categories, method) {
-        var previous = state ? state.categories.slice() : [];
+        promptHandled = true;
+        var hadDecision = !!state;
+        var previous = state ? state.categories.slice() : (outsideScope ? allIds.filter(granted) : []);
 
         var next = requiredIds.slice();
         for (var i = 0; i < categories.length; i++) {
@@ -484,7 +603,7 @@
         closeAll();
         syncBadge();
 
-        emit({ granted: next, denied: denied, changed: changed, first: previous.length === 0 });
+        emit({ granted: next, denied: denied, changed: changed, first: !hadDecision });
     }
 
     function emit(detail) {
@@ -514,6 +633,7 @@
     // ── panels ──────────────────────────────────────────────────────────────
 
     function showBanner() {
+        promptHandled = true;
         if (!banner) {
             return;
         }
@@ -532,6 +652,7 @@
     }
 
     function openPrefs() {
+        promptHandled = true;
         if (!prefs) {
             return;
         }
@@ -568,6 +689,7 @@
 
     /** Dismissed without answering. Not consent — the banner comes back. */
     function dismiss() {
+        promptHandled = true;
         if (config.blocking) {
             return;
         }
@@ -592,7 +714,7 @@
                 // optional switched off, whatever the site pre-ticked.
                 toggles[i].checked = false;
             } else {
-                toggles[i].checked = isDefault(id);
+                toggles[i].checked = granted(id) || isDefault(id);
             }
         }
     }
@@ -761,6 +883,7 @@
         reset: function () {
             clearCookie(COOKIE.name);
             state = null;
+            outsideScope = false;
             syncToggles();
             showBanner();
             syncBadge();
@@ -779,7 +902,7 @@
             notices[i].hidden = !gpcActive();
         }
         syncToggles();
-        showBanner();
+        autoPrompt();
     }
 
     syncBadge();
@@ -787,7 +910,7 @@
     // Fired on load as well as on change, so a script that arrives late never
     // misses the decision it needs.
     emit({
-        granted: state ? state.categories.slice() : [],
+        granted: allIds.filter(granted),
         denied: allIds.filter(function (id) { return !granted(id); }),
         changed: [],
         first: false,

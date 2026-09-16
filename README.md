@@ -14,6 +14,29 @@ Or drop the repo into `user/plugins/consent`. There are no dependencies and noth
 
 Out of the box you get four categories — strictly necessary, preferences, analytics, marketing — a banner that inherits your theme's font, and a decision log. That is usually all the setup there is.
 
+## Country-based prompting
+
+Under **General → Who gets asked**, choose who should automatically see the banner and how to look up their country. The default, **Everyone**, shows the banner without any country lookup. To use [country.is](https://country.is/) with the European preset, set:
+
+```yaml
+geo:
+  mode: eu
+  provider: country_is
+  outside_scope: allow
+```
+
+`eu` covers the EEA, the UK and Switzerland. For your own list, use `mode: custom` and `countries: [DE, FR, GB, US]` (two-letter country codes). These are geographic selections, not an automatically maintained list of legal requirements; choose the countries appropriate to your site.
+
+The optional country.is provider needs no API key. The visitor's browser calls `https://api.country.is/`, which exposes their IP to that service before consent. No credentials or referrer are sent. The plugin stores only the returned country and an expiry in session storage for up to one hour, never the returned IP. A separate short-lived `<consent-cookie-name>_country` cookie carries the country to PHP integrations and dynamic rendering; it is not a consent decision. If your site uses Content Security Policy, allow `https://api.country.is` in `connect-src`.
+
+Alternatively, keep `provider: header` to use a country header from your server or trusted proxy. `geo.header` defaults to `CF-IPCountry`; the plugin also checks common country headers and `GEOIP_COUNTRY_CODE`. Configure your proxy to overwrite those headers rather than accepting visitor-supplied values. The browser reads the country through an uncached `GET /_consent/country` endpoint (under your configured `log.endpoint`, even with logging disabled), keeping cached page HTML identical between countries. Any CDN rule that forces caching must exclude this endpoint.
+
+Visitors without a current decision see the popup automatically when their country matches. Unknown countries, lookup errors and requests taking more than three seconds show it too. Outside the selection, the popup stays closed, but preferences and the reopen badge remain available. **Outside selected countries** defaults to `allow`: optional services run automatically. Select `deny` to keep them blocked until opt-in everywhere. Saved decisions (including refusals) and Global Privacy Control take precedence over automatic allowance. Location never creates a consent decision or adds an audit entry. Unknown countries keep optional services blocked until consent. In dynamic render mode, a newly allowed embed may reload the page once after country detection so PHP can render it; geographic dynamic responses are private and must not be cached by a CDN.
+
+Previously, header-based scoping could bypass PHP consent checks outside the selected countries while the browser still displayed the banner. The automatic prompt and outside-country policy now work together in both render modes, with explicit saved choices taking precedence.
+
+Run the geographic behavior checks with `node --test tests/geo-runtime.test.cjs` and `php tests/geo.php`.
+
 ## For plugin authors
 
 This is the part that matters. Answer one event and your plugin is on the banner:
@@ -58,7 +81,7 @@ if (Consent::granted('functional')) {
 }
 ```
 
-`Consent::granted()` answers **false** until the visitor has actually decided. There is no "assume yes" mode and no setting to add one. It answers **true** when the plugin is absent or switched off — a site with no consent layer has made no promises, and it should not lose features because a plugin is not installed. Guard the class so your plugin still runs on its own:
+`Consent::granted()` answers **false** for optional categories until the visitor has actually decided, except when geographic scoping permits automatic allowance outside the selected countries. Required categories always remain available. It answers **true** when the plugin is absent or switched off — a site with no consent layer has made no promises, and it should not lose features because a plugin is not installed. Guard the class so your plugin still runs on its own:
 
 ```php
 if (!class_exists(Consent::class) || Consent::granted('functional')) {
