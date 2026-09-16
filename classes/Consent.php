@@ -15,9 +15,8 @@ use Grav\Common\Grav;
  *     Consent::grantedService('kahunacart-wishlist')
  *     Consent::decided()
  *
- * `granted()` answers false until the visitor has actually decided. Default
- * deny is the whole point, so there is no "assume yes until told otherwise"
- * mode and no configuration option to add one.
+ * Optional categories require a decision unless geographic scoping is
+ * configured to allow them outside the selected countries.
  */
 final class Consent
 {
@@ -77,13 +76,15 @@ final class Consent
             return true;
         }
 
-        if (!$self->isInScope()) {
-            // Outside the geographic scope the site chose to ask in, there is
-            // no banner to answer, so gated things run.
-            return true;
+        $state = $self->currentState();
+        if ($state !== null) {
+            return $state->granted($category);
         }
 
-        return $self->currentState()?->granted($category) ?? false;
+        return $definition !== null
+            && !$self->gpcSignal()
+            && ($self->config['geo']['outside_scope'] ?? 'allow') === 'allow'
+            && !$self->isInScope();
     }
 
     public static function grantedService(string $id): bool
@@ -187,10 +188,8 @@ final class Consent
     /**
      * Does this visitor get asked at all?
      *
-     * No IP database is bundled. Country comes from whatever header the stack
-     * in front of Grav sets — Cloudflare's `CF-IPCountry` by default. When the
-     * country cannot be determined the banner shows: failing open would be a
-     * compliance hole, so the unknown case is treated as in-scope.
+     * country.is resolves in the browser and leaves a short-lived country
+     * cookie so PHP integrations and dynamic rendering can use the result.
      */
     public function isInScope(): bool
     {
@@ -201,11 +200,12 @@ final class Consent
         $geo = (array)($this->config['geo'] ?? []);
         $mode = (string)($geo['mode'] ?? 'all');
 
-        if ($mode === 'all') {
+        if (!in_array($mode, ['eu', 'custom'], true)) {
             return $this->inScope = true;
         }
 
-        $country = $this->detectCountry($geo);
+        $country = ($geo['provider'] ?? 'header') === 'country_is'
+            ? $this->cookieCountry() : $this->detectCountry();
         if ($country === null) {
             return $this->inScope = true;
         }
@@ -217,11 +217,26 @@ final class Consent
         return $this->inScope = in_array($country, $countries, true);
     }
 
-    /**
-     * @param array<string, mixed> $geo
-     */
-    private function detectCountry(array $geo): ?string
+    private function cookieCountry(): ?string
     {
+        $raw = $_COOKIE[$this->cookieName() . '_country'] ?? null;
+        $data = is_string($raw) ? json_decode($raw, true) : null;
+        if (!is_array($data) || ($data['provider'] ?? null) !== 'country_is'
+            || !is_numeric($data['expires'] ?? null)
+            || $data['expires'] <= time() || $data['expires'] > time() + 3600) {
+            return null;
+        }
+
+        $country = $data['country'] ?? null;
+
+        return is_string($country) && preg_match('/^[A-Z]{2}$/D', $country)
+            && !in_array($country, ['XX', 'ZZ'], true) ? $country : null;
+    }
+
+    /** Read the country supplied by the site's trusted proxy or web server. */
+    public function detectCountry(): ?string
+    {
+        $geo = (array)($this->config['geo'] ?? []);
         $headers = array_filter(array_merge(
             [trim((string)($geo['header'] ?? 'CF-IPCountry'))],
             ['CF-IPCountry', 'X-Country-Code', 'X-AppEngine-Country', 'GeoIP-Country-Code']
@@ -230,7 +245,7 @@ final class Consent
         foreach ($headers as $header) {
             $key = 'HTTP_' . strtoupper(str_replace('-', '_', $header));
             $value = strtoupper(trim((string)($_SERVER[$key] ?? '')));
-            if ($value !== '' && $value !== 'XX' && strlen($value) === 2) {
+            if (preg_match('/^[A-Z]{2}$/D', $value) && !in_array($value, ['XX', 'ZZ'], true)) {
                 return $value;
             }
         }
@@ -239,7 +254,7 @@ final class Consent
         foreach (['GEOIP_COUNTRY_CODE', 'HTTP_CF_IPCOUNTRY'] as $env) {
             $raw = $_SERVER[$env] ?? getenv($env);
             $value = strtoupper(trim((string)($raw !== false ? $raw : '')));
-            if ($value !== '' && strlen($value) === 2) {
+            if (preg_match('/^[A-Z]{2}$/D', $value) && !in_array($value, ['XX', 'ZZ'], true)) {
                 return $value;
             }
         }
@@ -248,8 +263,7 @@ final class Consent
     }
 
     /**
-     * The EEA, plus the UK and Switzerland — the practical scope of "GDPR
-     * applies to this visitor" for a site choosing to ask only in Europe.
+     * A geographic preset, not a determination of which laws apply to a site.
      */
     public const EU_EEA_UK_CH = [
         'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR',

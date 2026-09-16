@@ -1,7 +1,7 @@
 name: Consent
 slug: consent
 type: plugin
-version: 1.0.1
+version: 1.0.2
 description: Cookie consent with a runtime inventory other plugins register into
 icon: shield-halved
 author:
@@ -153,6 +153,25 @@ form:
                 all: PLUGIN_CONSENT.GEO.ALL
                 eu: PLUGIN_CONSENT.GEO.EU
                 custom: PLUGIN_CONSENT.GEO.CUSTOM
+
+            geo.provider:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.GEO_PROVIDER
+              help: PLUGIN_CONSENT.FIELD.GEO_PROVIDER_HELP
+              default: header
+              size: medium
+              options:
+                header: PLUGIN_CONSENT.GEO.HEADER
+                country_is: country.is
+
+            geo.outside_scope:
+              type: select
+              label: PLUGIN_CONSENT.FIELD.GEO_OUTSIDE_SCOPE
+              help: PLUGIN_CONSENT.FIELD.GEO_OUTSIDE_SCOPE_HELP
+              default: allow
+              options:
+                allow: PLUGIN_CONSENT.GEO.ALLOW
+                deny: PLUGIN_CONSENT.GEO.DENY
 
             geo.header:
               type: text

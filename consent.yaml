@@ -25,6 +25,9 @@ cookie:
 
 geo:
   mode: all
+  # header or country_is. Only used when mode is eu or custom.
+  provider: header
+  outside_scope: allow
   header: CF-IPCountry
   countries: {}
 

@@ -1,3 +1,12 @@
+# v1.0.2
+## 09/16/2026
+
+1. [](#new)
+    * Optional country.is lookup for country-based automatic prompting, with the EEA/UK/Switzerland preset or a custom country list. Browser lookups need no API key, cache only the country for up to an hour, and show the banner if lookup fails or times out. Outside selected countries, optional services can run automatically (default) or stay blocked until opt-in.
+
+1. [](#bugfix)
+    * Geographic scoping now controls the browser's automatic popup. Header detection uses an uncached endpoint so one visitor's country cannot be reused in cached HTML. Saved decisions and Global Privacy Control take precedence over automatic geographic allowance.
+
 # v1.0.1
 ## 09/15/2026
 

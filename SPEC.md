@@ -309,9 +309,9 @@ GPC is legally binding in several US states and is never wrong to honor elsewher
 
 `geo.mode`: `all` (default) | `eu` | `custom`.
 
-No IP database is bundled. Country comes from a request header — `CF-IPCountry` by default, configurable, with `GEOIP_COUNTRY_CODE` and `HTTP_X_COUNTRY_CODE` as fallbacks. **If no country can be determined, the banner shows.** Failing open would be a compliance hole.
+No IP database is bundled. `geo.provider` selects `header` (default) or the optional `country_is` browser lookup at `https://api.country.is/`. Header lookup reads an uncached endpoint under `log.endpoint`, with `CF-IPCountry` by default and common country headers/environment variables as fallbacks. Country data never enters shared page HTML. `all` makes no lookup. **If no country can be determined, or lookup takes more than three seconds, the banner shows.** Successful lookups cache only the country and expiry in session storage for up to one hour. country.is also writes a short-lived country cookie for PHP and dynamic rendering, separate from the consent decision. country.is receives the visitor IP before consent; the request sends no credentials or referrer.
 
-`eu` covers the EEA plus the UK and Switzerland. `custom` takes an explicit country list.
+`eu` covers the EEA plus the UK and Switzerland. `custom` takes an explicit country list. These are geographic presets, not legal determinations. `geo.outside_scope` selects `allow` (default) or `deny`. Outside the selected countries, optional services run automatically with `allow`, unless a saved decision or GPC says otherwise; `deny` requires explicit consent everywhere. Automatic allowance never writes a consent decision or audit record. Manual preferences remain available. Dynamic geographic responses are private and not cacheable. A late lookup must not reopen a dismissed prompt or interrupt preferences.
 
 ---
 
