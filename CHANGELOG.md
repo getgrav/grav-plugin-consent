@@ -1,3 +1,9 @@
+# v1.0.3
+## 10/14/2026
+
+1. [](#bugfix)
+    * **The cookie banner printed on every sheet.** The banner, its preferences, the reopen badge and any cookie settings button now stay off paper
+
 # v1.0.2
 ## 09/16/2026
 

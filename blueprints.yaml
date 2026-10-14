@@ -1,7 +1,7 @@
 name: Consent
 slug: consent
 type: plugin
-version: 1.0.2
+version: 1.0.3
 description: Cookie consent with a runtime inventory other plugins register into
 icon: shield-halved
 author:
