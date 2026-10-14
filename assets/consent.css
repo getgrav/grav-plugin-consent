@@ -857,3 +857,17 @@ iframe[data-consent-frame] {
         flex: 1 1 auto;
     }
 }
+
+/* On paper the banner, the preferences dialog, the badge that reopens them
+   and every "Cookie settings" button a theme placed are left off: a banner
+   pinned to the foot of the window prints at the foot of every sheet. Chosen
+   by the data attributes the script uses, so an overridden banner template is
+   covered too. A blocked embed's placeholder keeps its sentence and loses its
+   buttons. */
+@media print {
+    [data-consent-banner],
+    [data-consent-open],
+    [data-consent-allow] {
+        display: none !important;
+    }
+}
