@@ -1,3 +1,9 @@
+# v1.0.4
+## 10/15/2026
+
+1. [](#bugfix)
+    * **The cookie banner stopped appearing in 1.0.3.** It shows again on every theme. Thanks @saddevil16 [#4](https://github.com/getgrav/grav-plugin-consent/issues/4) [#5](https://github.com/getgrav/grav-plugin-consent/pull/5)
+
 # v1.0.3
 ## 10/14/2026
 
