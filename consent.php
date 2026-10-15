@@ -288,6 +288,11 @@ class ConsentPlugin extends Plugin
             $output = $this->injectAfterHead($output, $bootstrap);
         }
 
+        // Detect a theme-placed banner BEFORE our own CSS is injected: the
+        // stylesheet itself contains "data-consent-banner" (print rule), so
+        // checking afterwards always matches.
+        $themeHasBanner = $this->hasBannerMarkup($output);
+
         // Styles and inert scripts go LAST in <head>, after the theme's own
         // stylesheets. Themes style bare `button` and `table` heavily — Pico,
         // which Quark 2 builds on, paints a coloured focus ring on every
@@ -301,7 +306,7 @@ class ConsentPlugin extends Plugin
         }
 
         $tail = '';
-        if (!$this->bannerRendered && !$this->hasBannerMarkup($output)) {
+        if (!$this->bannerRendered && !$themeHasBanner) {
             $tail .= ConsentRenderer::banner();
         }
         $tail .= $this->scriptTag();
