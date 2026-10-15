@@ -441,7 +441,9 @@ class ConsentPlugin extends Plugin
 
     private function hasBannerMarkup(string $output): bool
     {
-        return stripos($output, 'data-consent-banner') !== false;
+        // Only an attribute inside a tag counts. The bare text also appears in
+        // selectors (consent.css, theme styles, scripts) and in page content.
+        return (bool)preg_match('/<[a-z][^>]*\sdata-consent-banner[\s=>\/]/i', $output);
     }
 
     private function injectAfterHead(string $output, string $html): string
